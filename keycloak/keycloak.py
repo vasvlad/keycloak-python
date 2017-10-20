@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 from .config import Config
 from .grant_manager import GrantManager
@@ -102,6 +103,36 @@ class Keycloak(object):
 
             try:
                 return role in decoded['resource_access'][app]
+            except KeyError:
+                # logging.info('No resource_access.%s in token', app)
+                return False
+        else:
+            # logging.warning('grant_has_role: role has more than two parts separated by ":".')
+
+            return False
+
+    def grant_has_template_role(self, grant, role):
+        if not hasattr(grant, 'access_token') or not grant.access_token:
+            return False
+
+        decoded = self.manager.decode_token(grant.access_token)
+        splitted = role.split(':')
+
+        if len(splitted) == 1:
+            try:
+                regex = r"(^"+role+"*)"
+                return [x for x in decoded['realm_access']['roles'] if (re.match(regex,x))]
+#                return role in decoded['realm_access']['roles']
+            except KeyError:
+                # logging.info('No realm_access.roles in token')
+                return False
+
+        elif len(splitted) == 2:
+            app = splitted[0]
+            role = splitted[1]
+
+            try:
+                return [x for x in decoded['resource_access'][app] if (re.match(regex,x))]
             except KeyError:
                 # logging.info('No resource_access.%s in token', app)
                 return False
