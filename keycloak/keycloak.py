@@ -84,7 +84,7 @@ class Keycloak(object):
         pass
 
     def grant_has_role(self, grant, role):
-        if not hasattr(grant, 'access_token') or not grant.access_token:
+        if (not (hasattr(grant, 'access_token')) and not (hasattr(grant, 'confValue'))) or not grant.access_token:
             return False
 
         decoded = self.manager.decode_token(grant.access_token)
@@ -92,7 +92,10 @@ class Keycloak(object):
 
         if len(splitted) == 1:
             try:
-                return role in decoded['realm_access']['roles']
+                if ((role in decoded['realm_access']['roles']) or (role in decoded['confValue'])):
+                    return True
+                else:
+                    return False
             except KeyError:
                 # logging.info('No realm_access.roles in token')
                 return False
