@@ -124,7 +124,15 @@ class Keycloak(object):
         if len(splitted) == 1:
             try:
                 regex = r"(^"+role+"*)"
-                return [x for x in decoded['realm_access']['roles'] if (re.match(regex,x))]
+                regex2 = r"(^mobilemiriada_.*_"+  role + ".*)"
+                for x in decoded['confValue']:
+                    if (re.match(regex2,x)):
+                        return True 
+                for x in decoded['realm_access']['roles']:
+                    if (re.match(regex,x)):
+                        return True    
+                return False
+
 #                return role in decoded['realm_access']['roles']
             except KeyError:
                 # logging.info('No realm_access.roles in token')
